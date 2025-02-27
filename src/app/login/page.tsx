@@ -34,6 +34,34 @@ export default function LoginPage() {
     }, [user]);
 
     return (
-        <div></div>
+        <div className="flex flex-col flex-wrap mt-1 p-3 min-h-screen">
+            <h1>{loading ? "Processing..." : "Login"}</h1>
+            <form>
+                <label htmlFor="email">Email</label>
+                <input 
+                type="email" 
+                onChange={(e) => setUser({...user, email: e.target.value})}
+                placeholder="Email...."
+                value={user.email}
+                className="bg-black text-white text-4xl p-1 m-1 hover:bg-white"
+                />
+                <label htmlFor="password">Password</label>
+                <input 
+                type="password" 
+                value={user.password}
+                className="bg-black text-white text-4xl p-1 m-1 hover:bg-white"
+                placeholder="password...."
+                onChange={(e) => setUser({...user, password: e.target.value})}
+                />
+                {
+                    buttonDisabled ? <p>Disabled</p> : <button
+                    className="bg-blue-400 p-2 mt-1 h-screen hover:bg-blue-500 text-black text-xl"
+                    onClick={onLogin}
+                    >Login</button> 
+                }
+            </form>
+            <Link href={"/signup"}>Don't have an account!</Link>
+            
+        </div>
     )
 }
