@@ -2,7 +2,7 @@
 import React from "react"
 import axios from "axios"
 import Link from "next/link";
-import { useRouter } from "next/router";
+import {useRouter} from "next/router";
 
 
 export default function LoginPage() {
@@ -18,6 +18,8 @@ export default function LoginPage() {
             setLoading(true);
             const response = await axios.post("/api/users/login", {user});
             console.log(response.data);
+            const router = useRouter();
+            router.push("/")
         } catch (error: any) {
             console.log(error.message);
         } finally{
@@ -34,7 +36,7 @@ export default function LoginPage() {
     }, [user]);
 
     return (
-        <div className="flex flex-col flex-wrap mt-1 p-3 min-h-screen">
+        <div className="flex flex-col items-center justify-center min-h-screen py-2">
             <h1>{loading ? "Processing..." : "Login"}</h1>
             <form>
                 <label htmlFor="email">Email</label>
@@ -61,7 +63,7 @@ export default function LoginPage() {
                 }
             </form>
             <Link href={"/signup"}>Don't have an account!</Link>
-            
+
         </div>
     )
 }

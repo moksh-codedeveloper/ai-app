@@ -1,15 +1,14 @@
 "use client";
-
 import React from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { useRouter } from "next/router";
 export default function Signup() {
     const [user, setUser] = React.useState({
         username: "",
         email: "",
         password: "",
-        isVerified: false
     })
     const [buttonDisabled, setButtonDisabled] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
@@ -18,8 +17,8 @@ export default function Signup() {
             const response = await axios.post("/api/users/signup", user);
             console.log(response.data);
             if(response.status == 200) {
-                setUser({...user, isVerified : true })
-                console.log(user.isVerified);
+                const router = useRouter()
+                router.push("/");
             }
         } catch (error) {
             console.error(error);
