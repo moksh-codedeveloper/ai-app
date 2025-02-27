@@ -9,6 +9,7 @@ export default function Signup() {
         username: "",
         email: "",
         password: "",
+        isVerified: false
     })
     const [buttonDisabled, setButtonDisabled] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
@@ -16,6 +17,10 @@ export default function Signup() {
         try {
             const response = await axios.post("/api/users/signup", user);
             console.log(response.data);
+            if(response.status == 200) {
+                setUser({...user, isVerified : true })
+                console.log(user.isVerified);
+            }
         } catch (error) {
             console.error(error);
             toast.error("Something went wrong");
