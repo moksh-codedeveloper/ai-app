@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import User from "@/models/userModel";
-import { connect } from "@/dbConfig/dbConfig";
+import { connectToDatabase } from "@/lib/db";
+
 import bcrypt from "bcryptjs";
-connect();
 export async function POST(request: NextRequest) {
   try {
+    await connectToDatabase();
     const reqBody = await request.json();
     const { username, email, password} = reqBody;
     const isUserExist = await User.findOne({ email });
