@@ -1,7 +1,7 @@
 import {NextRequest,NextResponse } from "next/server";
 import User from "@/models/userModel";
 
-export async function GET(request: NextRequest){
+export async function POST(request: NextRequest){
     try {
         const reqBody = await request.json();
         const {email} = reqBody;

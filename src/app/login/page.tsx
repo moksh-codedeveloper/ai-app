@@ -3,11 +3,11 @@
 import React from "react"
 import axios from "axios"
 import Link from "next/link";
-// import {useRouter} from "next/router";
+import {useRouter} from "next/navigation";
 
 
 export default function LoginPage() {
-    // const router = useRouter();
+    const router = useRouter();
     const [user, setUser] = React.useState({
         email: "",
         password: ""
@@ -19,7 +19,7 @@ export default function LoginPage() {
             setLoading(true);
             const response = await axios.post("/api/users/login", user);
             console.log(response.data);
-            // router.push("/profile")
+            router.push("/profile")
         } catch (error: any) {
             console.log(error.message);
         } finally{
@@ -61,7 +61,9 @@ export default function LoginPage() {
                 <button
                 onClick={onLogin}
                 className="p-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600">{buttonDisabled ? "disabled" : "Login"}</button>
-                <Link href="/signup">Visit Signup page</Link>
+                <Link href={"/signup"}>Visit Signup page</Link>
+                <Link href={"/profile"}>Visit your profile</Link>
+                <button className="rounded-lg bg-violet-400 text-white p-2 hover:bg-indigo-400 hover:outline-2 hover:text-black">Forget Password <Link href={"/finduser"} className="text-red-500 text-xl outline-dashed">Click here!</Link></button>
             </div>
         )
 }
