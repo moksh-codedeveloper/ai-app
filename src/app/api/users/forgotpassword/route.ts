@@ -8,10 +8,10 @@ export async function POST(request: NextRequest) {
         await connectToDatabase();
         
         const reqBody = await request.json();
-        const {email, confirmPassword:password} = reqBody;
+        const {email, confirmPassword} = reqBody;
         
         // Validate inputs
-        if (!email || !password) {
+        if (!email || !confirmPassword) {
             return NextResponse.json(
                 { message: "Email and password are required" }, 
                 { status: 400 }
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         }
         
         // Hash the new password
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(confirmPassword, 10);
         
         // Find user and update password with proper filter object
         const updatedUser = await User.findOneAndUpdate(
