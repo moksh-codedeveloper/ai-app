@@ -7,7 +7,7 @@ connect();
 export async function POST(request: NextRequest) {
   try {
     const reqBody = await request.json();
-    const { email, password, isVerified } = reqBody;
+    const { email, password } = reqBody;
     const user = await User.findOne({ email });
     const isVerify = await bcrypt.compare(password, user.password);
     if (!user || !isVerify) {
@@ -17,12 +17,6 @@ export async function POST(request: NextRequest) {
         },
         { status: 404 }
       );
-    }
-    if(!user.isVerified) {
-      return NextResponse.json(
-        {error: "User is not verifed"},
-        {status : 400}
-      )
     }
     const tokenData = {
       id: user._id,
@@ -41,6 +35,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set("token", token, {
         httpOnly: true
     })
+    return response;
   } catch (error:any) {
     return NextResponse.json(
       {

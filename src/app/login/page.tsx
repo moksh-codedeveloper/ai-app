@@ -1,25 +1,25 @@
 "use client";
+
 import React from "react"
 import axios from "axios"
 import Link from "next/link";
-import {useRouter} from "next/router";
+// import {useRouter} from "next/router";
 
 
 export default function LoginPage() {
+    // const router = useRouter();
     const [user, setUser] = React.useState({
         email: "",
         password: ""
     })
     const [loading, setLoading] = React.useState(false);
     const [buttonDisabled, setButtonDisabled] = React.useState(false)
-
     const onLogin = async () => {
         try {
             setLoading(true);
-            const response = await axios.post("/api/users/login", {user});
+            const response = await axios.post("/api/users/login", user);
             console.log(response.data);
-            const router = useRouter();
-            router.push("/")
+            // router.push("/profile")
         } catch (error: any) {
             console.log(error.message);
         } finally{
@@ -37,33 +37,31 @@ export default function LoginPage() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen py-2">
-            <h1>{loading ? "Processing..." : "Login"}</h1>
-            <form>
-                <label htmlFor="email">Email</label>
-                <input 
-                type="email" 
-                onChange={(e) => setUser({...user, email: e.target.value})}
-                placeholder="Email...."
+            <h1>{loading ? "Processing" : "Login"}</h1>
+            <hr />
+            
+            <label htmlFor="email">email</label>
+            <input 
+            className="p-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600 text-black"
+                id="email"
+                type="text"
                 value={user.email}
-                className="bg-black text-white text-4xl p-1 m-1 hover:bg-white"
+                onChange={(e) => setUser({...user, email: e.target.value})}
+                placeholder="email"
                 />
-                <label htmlFor="password">Password</label>
-                <input 
-                type="password" 
+            <label htmlFor="password">password</label>
+            <input 
+            className="p-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600 text-black"
+                id="password"
+                type="password"
                 value={user.password}
-                className="bg-black text-white text-4xl p-1 m-1 hover:bg-white"
-                placeholder="password...."
                 onChange={(e) => setUser({...user, password: e.target.value})}
+                placeholder="password"
                 />
-                {
-                    buttonDisabled ? <p>Disabled</p> : <button
-                    className="bg-blue-400 p-2 mt-1 h-screen hover:bg-blue-500 text-black text-xl"
-                    onClick={onLogin}
-                    >Login</button> 
-                }
-            </form>
-            <Link href={"/signup"}>Don't have an account!</Link>
-
-        </div>
-    )
+                <button
+                onClick={onLogin}
+                className="p-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:border-gray-600">{buttonDisabled ? "disabled" : "Login"}</button>
+                <Link href="/signup">Visit Signup page</Link>
+            </div>
+        )
 }
