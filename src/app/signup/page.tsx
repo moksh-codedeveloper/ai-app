@@ -18,7 +18,7 @@ export default function Signup() {
             console.log(response.data);
             if(response.status == 200) {
                 const router = useRouter()
-                router.push("/");
+                router.push("/login");
             }
         } catch (error) {
             console.error(error);
