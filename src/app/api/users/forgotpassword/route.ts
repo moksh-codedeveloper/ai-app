@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
         await connectToDatabase();
         
         const reqBody = await request.json();
-        const {email, password} = reqBody;
+        const {email, confirmPassword:password} = reqBody;
         
         // Validate inputs
         if (!email || !password) {

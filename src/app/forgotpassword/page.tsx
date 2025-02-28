@@ -19,7 +19,7 @@ export default function ForgotPassword () {
                 setMessage("Please Keep both passwords same")
                 setLoading(false)
             }
-            const response = await axios.post("/api/users/forgotpassword", {email, confirmPassword})
+            const response = await axios.post("/api/users/forgotpassword", {email, password:confirmPassword})
             if(response.status == 200){
                 console.log(response.data);
                 router.push("/login")
@@ -32,40 +32,40 @@ export default function ForgotPassword () {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-            <h1 className="text-2xl font-bold mb-4">Change Password</h1>
-            <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-full max-w-md">
+        <div className="flex flex-col items-center text-black justify-center min-h-screen bg-gray-100">
+            <h1 className="text-2xl text-black font-bold mb-4">Change Password</h1>
+            <form onSubmit={handleSubmit} className="bg-white p-6 rounded text-black shadow-md w-full max-w-md">
                 <div className="mb-4">
-                    <label htmlFor="email" className="block text-gray-700">Email:</label>
+                    <label htmlFor="email" className="block text-black">Email:</label>
                     <input
                         type="email"
                         id="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full px-3 py-2 border rounded"
+                        className="w-full px-3 py-2 border rounded text-black"
                     />
                 </div>
                 <div className="mb-4">
-                    <label htmlFor="new-password" className="block text-gray-700">New Password:</label>
+                    <label htmlFor="new-password" className="block text-black">New Password:</label>
                     <input
                         type="password"
                         id="new-password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         required
-                        className="w-full px-3 py-2 border rounded"
+                        className="w-full px-3 py-2 text-black border rounded"
                     />
                 </div>
                 <div className="mb-4">
-                    <label htmlFor="confirm-password" className="block text-gray-700">Confirm Password:</label>
+                    <label htmlFor="confirm-password" className="block text-black">Confirm Password:</label>
                     <input
                         type="password"
                         id="confirm-password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        className="w-full px-3 py-2 border rounded"
+                        className="w-full px-3 py-2 border rounded text-black"
                     />
                 </div>
                 { message ? <p className="mt-4 text-red-500">{message}</p> : 
