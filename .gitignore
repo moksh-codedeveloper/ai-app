@@ -39,4 +39,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-/src/app/api/aichatbot/chatbot/venv/*
+/src/app/api/aichatbot/chatbot/venv

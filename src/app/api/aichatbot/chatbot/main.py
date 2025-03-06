@@ -6,7 +6,7 @@ app = FastAPI()
 
 # Together AI API
 TOGETHER_AI_URL = "https://api.together.xyz/v1/completions"
-TOGETHER_AI_KEY = "YOUR_TOGETHER_AI_API_KEY"
+TOGETHER_AI_KEY = "tgp_v1_zlFKDYH4KXQdT6TL6wZHNF3ai7HRQ2rEM6N54MzupqM"
 TOGETHER_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
 
 # Search APIs
