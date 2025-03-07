@@ -1,43 +1,61 @@
-from fastapi import FastAPI, Query
-from pydantic import BaseModel
 import requests
-
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import os
+from dotenv import load_dotenv
 app = FastAPI()
-
-# Together AI API
-TOGETHER_AI_URL = "https://api.together.xyz/v1/completions"
-TOGETHER_AI_KEY = "tgp_v1_zlFKDYH4KXQdT6TL6wZHNF3ai7HRQ2rEM6N54MzupqM"
-TOGETHER_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
-
-# Search APIs
-SERPAPI_KEY = "YOUR_SERPAPI_KEY"
-DUCKDUCKGO_FREE_API = "https://api.duckduckgo.com/?format=json&q="
+load_dotenv()
+TOGETHER_API_KEY = os.getenv("TOGETHER_AI_KEY")
 
 class ChatRequest(BaseModel):
     message: str
 
-@app.post("/chat")
-def chat_with_ai(request: ChatRequest):
+def call_together_ai(message: str):
+    url = "https://api.together.xyz/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {TOGETHER_API_KEY}", "Content-Type": "application/json"}
     payload = {
-        "model": TOGETHER_MODEL,
-        "prompt": request.message,
-        "max_tokens": 100,
-        "temperature": 0.7
+        "model": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        "messages": [{"role": "user", "content": message}],
+        "max_tokens": 200
     }
-    headers = {"Authorization": f"Bearer {TOGETHER_AI_KEY}", "Content-Type": "application/json"}
+
+    response = requests.post(url, headers=headers, json=payload)
+    data = response.json()
+
+    print("Together AI Response:", data)  # Debugging
+
+    if "choices" in data and len(data["choices"]) > 0:
+        return data["choices"][0].get("message", {}).get("content", "No response")
+    else:
+        return "Error: No valid response from AI"
+
+@app.post("/chat")
+async def chat_endpoint(request: ChatRequest):
+    try:
+        response_text = call_together_ai(request.message)
+        print("Final Response:", response_text)  # Debugging
+        return {"response": response_text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/summarize")
+async def summarize_text(data: dict):
+    text = data.get("text")
     
-    response = requests.post(TOGETHER_AI_URL, json=payload, headers=headers)
-    return response.json()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
 
-@app.get("/search")
-def search(q: str = Query(..., title="Search Query")):
-    serpapi_url = f"https://serpapi.com/search.json?q={q}&api_key={SERPAPI_KEY}"
-    duckduckgo_url = f"{DUCKDUCKGO_FREE_API}{q}"
-
-    serp_response = requests.get(serpapi_url)
-    duck_response = requests.get(duckduckgo_url)
-
-    return {
-        "serpapi": serp_response.json() if serp_response.status_code == 200 else {},
-        "duckduckgo": duck_response.json() if duck_response.status_code == 200 else {}
+    headers = {"Authorization": f"Bearer {TOGETHER_API_KEY}", "Content-Type": "application/json"}
+    payload = {
+        "model": "togethercomputer/mixtral-8x7b-instruct",
+        "prompt": f"Summarize this: {text}",
+        "max_tokens": 150
     }
+
+    response = requests.post("https://api.together.xyz/v1/completions", json=payload, headers=headers)
+    
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail="Failed to summarize")
+
+    summary = response.json().get("choices", [{}])[0].get("text", "").strip()
+    return {"summary": summary}
