@@ -47,7 +47,7 @@ async def summarize_text(data: dict):
 
     headers = {"Authorization": f"Bearer {TOGETHER_API_KEY}", "Content-Type": "application/json"}
     payload = {
-        "model": "togethercomputer/mixtral-8x7b-instruct",
+        "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
         "prompt": f"Summarize this: {text}",
         "max_tokens": 150
     }

@@ -6,8 +6,10 @@ import axios from "axios";
 export default function ChatAI() {
   const [message, setMessage] = useState("");
   const [aiResponse, setAiResponse] = useState("");
+  const [summary, setSummary] = useState("");
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
-
+  // const [response, setResponse] = useState("");
   const sendMessage = async () => {
     setLoadingAI(true);
     try {
@@ -20,6 +22,24 @@ export default function ChatAI() {
     } finally {
       setLoadingAI(false);
     }
+  };
+  const summarizeResponse = async () => {
+    if (!aiResponse) return;
+
+    setSummaryLoading(true);
+    setSummary("");
+
+    try {
+      const res = await axios.post("/api/aichatbot/summarize", {
+        text: aiResponse,
+      });
+      // setSummary(res.data);
+      setSummary(res.data.summary)
+    } catch (error) {
+      setSummary("Failed to generate summary.");
+    }
+
+    setSummaryLoading(false);
   };
   return (
     <div className="p-4 bg-black">
@@ -38,7 +58,28 @@ export default function ChatAI() {
         {loadingAI ? "Loading..." : "Send"}
       </button>
       <div className="mt-4 p-2 border rounded bg-black">
-        <strong>AI Response:</strong> {aiResponse}
+        {aiResponse && (
+          <button
+            onClick={summarizeResponse}
+            disabled={summaryLoading}
+            className="bg-white text-black px-4 py-2 rounded"
+          >
+            {summaryLoading ? "Loading..." : "Summarize"}
+          </button>
+        )}
+        {aiResponse && (
+        <div className="mt-4 p-4 border rounded bg-gray-100 text-black">
+          <h2 className="font-semibold">Response:</h2>
+          <p>{aiResponse}</p>
+        </div>
+      )}
+
+      {summary && (
+        <div className="mt-4 p-4 border rounded bg-yellow-100">
+          <h2 className="font-semibold">Summarized Response:</h2>
+          <p>{typeof summary === "string" ? summary : JSON.stringify(summary)}</p>
+        </div>
+      )}
       </div>
     </div>
   );
