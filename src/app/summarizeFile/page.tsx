@@ -26,10 +26,13 @@ export default function FileUploader() {
     formData.append("file", file);
 
     try {
-      const response = await axios.post("/api/aichatbot/summarizeFile", formData, {
+      const response = await axios({
+        method: "post",
+        url: "/api/aichatbot/summarizeNotes",
+        data: formData,
         headers: { "Content-Type": "multipart/form-data" },
+        timeout: 10000, // 10 seconds timeout
       });
-
       setSummary(response.data.summary);
     } catch (error: any) {
       setError(error.response?.data?.error || "Something went wrong!");

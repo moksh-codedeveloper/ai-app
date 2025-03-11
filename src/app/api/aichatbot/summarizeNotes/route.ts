@@ -3,6 +3,11 @@ import axios from "axios";
 import pdfParse from "pdf-parse"; // Install with `npm install pdf-parse`
 import cloudinary from "@/lib/cloudinary";
 import fs from "fs/promises";
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,7 +55,7 @@ export async function POST(request: NextRequest) {
         console.log("✅ Text File Uploaded to Cloudinary:", textCloudinaryUrl);
 
         // ✅ Send extracted text to FastAPI AI summarization
-        const aiResponse = await axios.post("http://127.0.0.1:8000/summarizeFile", {
+        const aiResponse = await axios.post("http://localhost:8000/summarizeFile", {
           text: extractedText,
         });
 
