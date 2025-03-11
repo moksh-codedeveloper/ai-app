@@ -26,7 +26,7 @@ export default function FileUploader() {
     formData.append("file", file);
 
     try {
-      const response = await axios.post("/api/summarizeFile", formData, {
+      const response = await axios.post("/api/summarizeDocs", formData, {
         headers: { "Content-Type": "multipart/form-data" },
         timeout: 15000, // 15 seconds timeout
       });

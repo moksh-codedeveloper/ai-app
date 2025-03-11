@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    const response = await axios.post("http://localhost:8000/summarize", { text });
+    const response = await axios.post("http://localhost:8000/summarizeNote", { text });
 
     return NextResponse.json(response.data, { status: 200 });
   } catch (error: any) {

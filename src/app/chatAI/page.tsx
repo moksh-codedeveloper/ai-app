@@ -76,8 +76,8 @@ export default function ChatAI() {
 
       {summary && (
         <div className="mt-4 p-4 border rounded bg-yellow-100">
-          <h2 className="font-semibold">Summarized Response:</h2>
-          <p>{typeof summary === "string" ? summary : JSON.stringify(summary)}</p>
+          <h2 className="font-semibold text-black">Summarized Response:</h2>
+          <p className="text-black">{typeof summary === "string" ? summary : JSON.stringify(summary)}</p>
         </div>
       )}
       </div>

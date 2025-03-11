@@ -24,7 +24,7 @@ def call_together_ai(message: str):
         "model": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
         "messages": [{"role": "user", "content": message}],
         "max_tokens": 200,
-        "temperature": 0.2
+        "temperature": 0.7
     }
 
     response = requests.post(url, headers=headers, json=payload)
@@ -53,8 +53,8 @@ def summarize_text(text: str, context: str):
     payload = {
         "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
         "prompt": f"{context}\n\n{text}",
-        "max_tokens": 300,
-        "temperature": 0.3,
+        "max_tokens": 100,
+        "temperature": 0.2,
         "query_id": str(uuid.uuid4())  # Prevents caching issues
     }
 
