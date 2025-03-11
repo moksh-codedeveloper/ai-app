@@ -6,6 +6,8 @@ import fs from "fs";
 // Ensure you have `cloudinary.ts` in `src/lib/cloudinary.ts`
 export async function POST(req: NextRequest) {
   try {
+    console.log("Api request working :", req);
+    
     const formData = await req.formData();
     const file = formData.get("file") as Blob | null;
 

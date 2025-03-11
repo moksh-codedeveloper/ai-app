@@ -26,10 +26,18 @@ export default function FileUploader() {
     formData.append("file", file);
 
     try {
-      const response = await axios.post("/api/summarizeDocs", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        timeout: 15000, // 15 seconds timeout
-      });
+      const baseURL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      const response = await axios.post(
+        `${baseURL}/api/summarizeDocs`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 15000,
+        }
+      );
+
+      console.log(response);
 
       setSummary(response.data.summary);
     } catch (error: any) {
@@ -65,7 +73,9 @@ export default function FileUploader() {
           </button>
         </div>
 
-        {error && <p className="text-red-500 text-sm mt-2 text-center">{error}</p>}
+        {error && (
+          <p className="text-red-500 text-sm mt-2 text-center">{error}</p>
+        )}
 
         {summary && (
           <div className="mt-6 bg-gray-50 p-4 rounded-lg shadow-inner">
