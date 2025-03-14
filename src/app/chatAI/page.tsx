@@ -26,10 +26,8 @@ export default function ChatAI() {
   const summarizeResponse = async () => {
     if (!aiResponse) return;
 
-    setSummaryLoading(true);
-    setSummary("");
-
     try {
+      setSummaryLoading(true);
       const res = await axios.post("/api/aichatbot/summarize", {
         text: aiResponse,
       });
@@ -84,3 +82,4 @@ export default function ChatAI() {
     </div>
   );
 }
+// This is ai chat code present in the src/app/chatAI 

@@ -21,10 +21,11 @@ def call_together_ai(message: str):
     url = "https://api.together.xyz/v1/chat/completions"
     headers = {"Authorization": f"Bearer {TOGETHER_API_KEY}", "Content-Type": "application/json"}
     payload = {
-        "model": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        # meta-llama/Llama-3.3-70B-Instruct-Turbo-Free
+        "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
         "messages": [{"role": "user", "content": message}],
-        "max_tokens": 200,
-        "temperature": 0.7
+        "max_tokens": 500,
+        "temperature": 0.2
     }
 
     response = requests.post(url, headers=headers, json=payload)
@@ -51,7 +52,8 @@ async def chat_endpoint(request: ChatRequest):
 def summarize_text(text: str, context: str):
     headers = {"Authorization": f"Bearer {TOGETHER_API_KEY}", "Content-Type": "application/json"}
     payload = {
-        "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+        "model": "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        # meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo
         "prompt": f"{context}\n\n{text}",
         "max_tokens": 100,
         "temperature": 0.2,
@@ -66,19 +68,19 @@ def summarize_text(text: str, context: str):
     return response.json().get("choices", [{}])[0].get("text", "").strip()
 
 # ✅ Summarization Endpoint for Case Studies (Files)
-@app.post("/summarizeFile")
-async def summarize_file(request: SummarizationRequest):
-    summary = summarize_text(
-        request.text,
-        "Summarize the following accurately and concisely."
-    )
-    return {"summary": summary}
+# @app.post("/summarizeFile")
+# async def summarize_file(request: SummarizationRequest):
+#     summary = summarize_text(
+#         request.text,
+#         "Summarize the following accurately and concisely."
+#     )
+#     return {"summary": summary}
 
 # ✅ Summarization Endpoint for Notes (General Summarization)
-@app.post("/summarizeNote")
+@app.post("/summarize")
 async def summarize_note(request: SummarizationRequest):
     summary = summarize_text(
         request.text,
-        "Summarize the following **notes concisely** while maintaining all key details."
+        "Summarize the following {text}"
     )
     return {"summary": summary}
