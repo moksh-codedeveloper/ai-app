@@ -5,7 +5,7 @@ import { connectToDatabase } from "@/lib/db";
 import bcrypt from "bcryptjs";
 export async function POST(request: NextRequest) {
   try {
-    await connectToDatabase();
+    await connectToDatabase("main");
     const reqBody = await request.json();
     const { username, email, password} = reqBody;
     const isUserExist = await User.findOne({ email });

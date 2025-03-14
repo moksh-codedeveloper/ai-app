@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 export async function POST(request: NextRequest){
     try {
         // Connect to database
-        await connectToDatabase();
+        await connectToDatabase("main");
         const reqBody = await request.json();
         const {email} = reqBody;
         const user = await User.findOne({email})

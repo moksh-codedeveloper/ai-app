@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
-    await  connectToDatabase();
+    await  connectToDatabase("main");
     const reqBody = await request.json();
     const { email, password } = reqBody;
     const user = await User.findOne({ email });
