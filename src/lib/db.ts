@@ -1,103 +1,67 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URL || 'mongodb://localhost:27017/myapp';
-
-// Connection state interface
-interface MongoConnection {
-isConnected: boolean;
-client: typeof mongoose | null;
-promise: Promise<typeof mongoose> | null;
-}
-
-// Connection state with initial values
-const connection: MongoConnection = {
-isConnected: false,
-client: null,
-promise: null,
+const connections: { [key: string]: mongoose.Connection | null } = {
+  main: null,
+  chat: null,
 };
 
 /**
-* Global function to connect to MongoDB with caching
-*/
-export async function connectToDatabase(): Promise<typeof mongoose> {
-// If we're already connected, return the existing connection
-if (connection.isConnected) {
-    console.log('Using existing MongoDB connection');
-    return connection.client!;
-}
+ * Connect to the specified MongoDB database (main or chat)
+ */
+export async function connectToDatabase(dbName: "main" | "chat"): Promise<mongoose.Connection> {
+  if (connections[dbName]) {
+    console.log(`Using existing connection for ${dbName} database`);
+    return connections[dbName]!;
+  }
 
-// If a connection is in progress, wait for it to complete
-if (connection.promise) {
-    console.log('Waiting for existing MongoDB connection promise to resolve');
-    return connection.promise;
-}
+  const uri = dbName === "chat" ? process.env.MONGODB_URI_CHAT : process.env.MONGODB_URI_MAIN;
+  if (!uri) {
+    throw new Error(`Missing MongoDB URI for ${dbName}`);
+  }
 
-// Create a new connection promise
-connection.promise = mongoose
-    .connect(MONGODB_URI, {
-    connectTimeoutMS: 10000, // Give up initial connection after 10 seconds
-    })
-    .then((mongoose) => {
-    console.log('MongoDB connected successfully');
+  try {
+    console.log(`Connecting to ${dbName} database...`);
+    const connection = await mongoose.createConnection(uri, {
+      connectTimeoutMS: 10000,
+    }).asPromise();
+
+    console.log(`${dbName} database connected successfully`);
     
-    // Update connection state
-    connection.isConnected = true;
-    connection.client = mongoose;
-    
-    // Handle disconnect events
-    mongoose.connection.on('disconnected', () => {
-        console.warn('MongoDB disconnected');
-        connection.isConnected = false;
-    });
-    
-    mongoose.connection.on('error', (err) => {
-        console.error('MongoDB connection error:', err);
-        connection.isConnected = false;
-    });
-    
-    return mongoose;
-    })
-    .catch((err) => {
-    console.error('MongoDB connection error:', err);
-    connection.promise = null;
-    throw err;
+    // Handle disconnection events
+    connection.on("disconnected", () => {
+      console.warn(`${dbName} database disconnected`);
+      connections[dbName] = null;
     });
 
-return connection.promise;
+    connection.on("error", (err) => {
+      console.error(`${dbName} database connection error:`, err);
+      connections[dbName] = null;
+    });
+
+    connections[dbName] = connection;
+    return connection;
+  } catch (error) {
+    console.error(`Error connecting to ${dbName} database:`, error);
+    throw error;
+  }
 }
 
 /**
-* Get the database client - will connect automatically if not connected
-*/
-export async function getDbClient(): Promise<typeof mongoose> {
-return connectToDatabase();
+ * Disconnect all MongoDB connections
+ */
+export async function disconnectFromAllDatabases() {
+  for (const key in connections) {
+    if (connections[key]) {
+      await connections[key]!.close();
+      console.log(`${key} database disconnected`);
+      connections[key] = null;
+    }
+  }
 }
 
 /**
-* Get a direct reference to the MongoDB connection
-*/
-export function getMongoConnection(): mongoose.Connection | null {
-return connection.client?.connection || null;
+ * Get an existing connection for a database
+ */
+export function getDatabaseConnection(dbName: "main" | "chat"): mongoose.Connection | null {
+  return connections[dbName] || null;
 }
-
-/**
-* Disconnect from MongoDB - useful for testing and controlled shutdowns
-*/
-export async function disconnectFromDatabase(): Promise<void> {
-if (connection.isConnected && connection.client) {
-    await connection.client.disconnect();
-    connection.isConnected = false;
-    connection.client = null;
-    connection.promise = null;
-    console.log('MongoDB disconnected');
-}
-}
-
-// Default export for easier imports
-export default {
-connect: connectToDatabase,
-getClient: getDbClient,
-getConnection: getMongoConnection,
-disconnect: disconnectFromDatabase,
-};
-

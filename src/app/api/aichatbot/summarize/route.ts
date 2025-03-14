@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     const response = await axios.post("http://localhost:8000/summarizeNote", { text });
 
-    return NextResponse.json(response.data, { status: 200 });
+    return NextResponse.json({response  : response.data.summary}, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       { error: error.response?.data?.detail || "Summarization failed" },
