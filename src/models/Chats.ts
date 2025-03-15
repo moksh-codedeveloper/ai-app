@@ -1,8 +1,8 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
+import { Schema, Document, Model, model, models } from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 
 interface IMessage {
-  sender: "user" | "ai";
+  sender: "user" | "assistant"; // Consistent sender roles
   text: string;
   timestamp: Date;
 }
@@ -17,7 +17,7 @@ const ChatSchema = new Schema<IChat>({
   userId: { type: String, required: true },
   messages: [
     {
-      sender: { type: String, enum: ["user", "ai"], required: true },
+      sender: { type: String, enum: ["user", "assistant"], required: true },
       text: { type: String, required: true },
       timestamp: { type: Date, default: Date.now },
     },
@@ -25,8 +25,8 @@ const ChatSchema = new Schema<IChat>({
   createdAt: { type: Date, default: Date.now },
 });
 
-await connectToDatabase("chat"); // Ensure DB connection before exporting
-
-const Chat: Model<IChat> = mongoose.models.Chat || mongoose.model<IChat>("Chat", ChatSchema);
-
-export default Chat;
+// ✅ Ensure DB connection and return model
+export const getChatModel = async (): Promise<Model<IChat>> => {
+  await connectToDatabase("chat"); // Ensure the DB is connected
+  return models.Chat || model<IChat>("Chat", ChatSchema);
+};
