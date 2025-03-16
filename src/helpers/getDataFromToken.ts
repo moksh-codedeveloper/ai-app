@@ -1,19 +1,24 @@
-import { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken'
+import { NextRequest } from 'next/server'
 
-export async function getDataFromToken(req: NextRequest): Promise<string | null> {
-  try {
-    const token = req.cookies.get("token")?.value; // ✅ Extract token from cookies
-    if (!token) return null;
+export function getDataFromToken(requestOrToken: NextRequest | string): any | null {
+    let token = ''
 
-    console.log("Token extracted:", token); // Debugging
+    // If it's a NextRequest (Middleware Case)
+    if (typeof requestOrToken !== 'string') {
+        token = requestOrToken.cookies.get('token')?.value || ''
+    } else {
+        // If it's a direct token string (API routes, chatHistory, etc.)
+        token = requestOrToken
+    }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userID: string };
-    console.log("Decoded Token:", decoded); // Debugging
+    if (!token) return null
 
-    return decoded.userID; // ✅ Return userID
-  } catch (error) {
-    console.error("Token verification error:", error);
-    return null;
-  }
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!)
+        return decoded // ✅ Returns the decoded user data (e.g., { userID, email })
+    } catch (error) {
+        console.error("Invalid Token:", error)
+        return null
+    }
 }

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import User from "@/models/userModel";
-import { connectToDatabase } from "@/lib/db";
+import  {connect} from "@/lib/db";
 
 import bcrypt from "bcryptjs";
 export async function POST(request: NextRequest) {
   try {
-    await connectToDatabase("main");
+    connect();
     const reqBody = await request.json();
     const { username, email, password} = reqBody;
     const isUserExist = await User.findOne({ email });
@@ -37,12 +37,14 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
+    console.error("Signup error:", error);
     return NextResponse.json(
       {
-        message: "Something went wrong",
+        message: "Error creating user",
+        error: error instanceof Error ? error.message : "Unknown error occurred"
       },
       {
-        status: 500,
+        status: 500
       }
     );
   }

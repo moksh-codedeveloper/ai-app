@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {getChatModel}  from "@/models/Chats";
-import { connectToDatabase } from "@/lib/db";
+// import { connectToDatabase } from "@/lib/db";s
 // import { NextRequest, NextResponse } from "next/server";
 
 // import getChatModel from "@/lib/models/Chat"; // Import the fixed Chat model
@@ -8,7 +8,7 @@ import { connectToDatabase } from "@/lib/db";
 
 export async function GET(request: NextRequest, { params }: { params: { userID: string } }) {
   try {
-    await connectToDatabase("chat");
+    // await connectToDatabase("chat");
 
     const { userID } = params; // Extract userID from URL
 

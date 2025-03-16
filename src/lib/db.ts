@@ -1,67 +1,46 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv"
 
-const connections: { [key: string]: mongoose.Connection | null } = {
-  main: null,
-  chat: null,
-};
+dotenv.config();
+const MONGO_URI: string = process.env.MONGODB_URI_MAIN ?? "";
 
-/**
- * Connect to the specified MongoDB database (main or chat)
- */
-export async function connectToDatabase(dbName: "main" | "chat"): Promise<mongoose.Connection> {
-  if (connections[dbName]) {
-    console.log(`Using existing connection for ${dbName} database`);
-    return connections[dbName]!;
-  }
-
-  const uri = dbName === "chat" ? process.env.MONGODB_URI_CHAT : process.env.MONGODB_URI_MAIN;
-  if (!uri) {
-    throw new Error(`Missing MongoDB URI for ${dbName}`);
-  }
-
-  try {
-    console.log(`Connecting to ${dbName} database...`);
-    const connection = await mongoose.createConnection(uri, {
-      connectTimeoutMS: 10000,
-    }).asPromise();
-
-    console.log(`${dbName} database connected successfully`);
-    
-    // Handle disconnection events
-    connection.on("disconnected", () => {
-      console.warn(`${dbName} database disconnected`);
-      connections[dbName] = null;
-    });
-
-    connection.on("error", (err) => {
-      console.error(`${dbName} database connection error:`, err);
-      connections[dbName] = null;
-    });
-
-    connections[dbName] = connection;
-    return connection;
-  } catch (error) {
-    console.error(`Error connecting to ${dbName} database:`, error);
-    throw error;
-  }
+if (!MONGO_URI) {
+    throw new Error("❌ MONGO_URI is missing! Check your environment variables.");
 }
 
-/**
- * Disconnect all MongoDB connections
- */
-export async function disconnectFromAllDatabases() {
-  for (const key in connections) {
-    if (connections[key]) {
-      await connections[key]!.close();
-      console.log(`${key} database disconnected`);
-      connections[key] = null;
+// Properly declare the global object to avoid TypeScript errors
+interface MongooseGlobal {
+    conn: mongoose.Connection | null;
+    promise: Promise<mongoose.Connection> | null;
+}
+
+declare global {
+    var mongooseGlobal: MongooseGlobal;
+}
+
+// Initialize global object if not already defined
+global.mongooseGlobal = global.mongooseGlobal || { conn: null, promise: null };
+
+export async function connect() {
+    try {
+        if (global.mongooseGlobal.conn) {
+            console.log("🔄 Using existing MongoDB connection");
+            return global.mongooseGlobal.conn;
+        }
+
+        if (!global.mongooseGlobal.promise) {
+            console.log("🔌 Creating new MongoDB connection");
+            global.mongooseGlobal.promise = mongoose.connect(MONGO_URI).then((mongooseInstance) => {
+                global.mongooseGlobal.conn = mongooseInstance.connection;
+                return mongooseInstance.connection;
+            });
+        }
+
+        global.mongooseGlobal.conn = await global.mongooseGlobal.promise;
+        console.log("✅ Connected to MongoDB!");
+        return global.mongooseGlobal.conn;
+    } catch (error) {
+        console.error("❌ MongoDB connection error:", error);
+        throw error;
     }
-  }
-}
-
-/**
- * Get an existing connection for a database
- */
-export function getDatabaseConnection(dbName: "main" | "chat"): mongoose.Connection | null {
-  return connections[dbName] || null;
 }
