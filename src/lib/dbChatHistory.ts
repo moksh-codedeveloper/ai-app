@@ -9,39 +9,25 @@ if (!MONGO_CHAT_URI) {
   throw new Error("❌ MONGO_CHAT_URI is missing! Check your environment variables.");
 }
 
-// Properly declare the global object to avoid TypeScript errors
-interface MongooseGlobal {
-  conn: mongoose.Connection | null;
-  promise: Promise<mongoose.Connection> | null;
-}
-
-declare global {
-  var mongooseChatGlobal: MongooseGlobal;
-}
-
-// Initialize global object if not already defined
-global.mongooseChatGlobal = global.mongooseChatGlobal || { conn: null, promise: null };
+// Use a global cache to prevent multiple connections
+let cached = (global as any).mongooseChatGlobal || { conn: null, promise: null };
 
 export async function connectChatDB() {
-  try {
-    if (global.mongooseChatGlobal.conn) {
-      console.log("🔄 Using existing MongoDB connection (Chat History)");
-      return global.mongooseChatGlobal.conn;
-    }
-
-    if (!global.mongooseChatGlobal.promise) {
-      console.log("🔌 Creating new MongoDB connection (Chat History)");
-      global.mongooseChatGlobal.promise = mongoose.connect(MONGO_CHAT_URI).then((mongooseInstance) => {
-        global.mongooseChatGlobal.conn = mongooseInstance.connection;
-        return mongooseInstance.connection;
-      });
-    }
-
-    const connection = await global.mongooseChatGlobal.promise;
-    console.log("✅ Connected to MongoDB (Chat History)!");
-    return connection;
-  } catch (error) {
-    console.error("❌ MongoDB (Chat History) connection error:", error);
-    throw error;
+  if (cached.conn) {
+    console.log("🔄 Using existing MongoDB connection (Chat History)");
+    return cached.conn;
   }
+
+  if (!cached.promise) {
+    console.log("🔌 Creating new MongoDB connection (Chat History)");
+    cached.promise = mongoose.connect(MONGO_CHAT_URI).then((mongooseInstance) => {
+      return mongooseInstance.connection;
+    });
+  }
+
+  cached.conn = await cached.promise;
+  (global as any).mongooseChatGlobal = cached; // Store globally
+
+  console.log("✅ Connected to MongoDB (Chat History)!");
+  return cached.conn;
 }

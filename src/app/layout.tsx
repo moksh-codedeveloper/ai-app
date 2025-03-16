@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { useEffect } from "react";
+import { fetchUserID } from "@/helpers/getUserId/route"; // Import the fetch function
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,6 +24,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  useEffect(() => {
+    fetchUserID(); // Fetch userID when app loads
+  }, []);
+
   return (
     <html lang="en">
       <body

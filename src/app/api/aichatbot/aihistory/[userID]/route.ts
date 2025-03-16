@@ -1,73 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import {getChatHistoryModel}  from "@/models/Chats";
+import { connectChatDB } from "@/lib/dbChatHistory";  // Ensure correct import
+import { getChatHistoryModel } from "@/models/Chats"; // Ensure correct import
 
-export async function GET(
-  request: NextRequest, 
-  { params }: { params?: { userID?: string } }
-): Promise<NextResponse> {
-  try {
-    // await connectToDatabase("chat");
+export async function GET(request: NextRequest, { params }: { params: { userID: string } }) {
+  await params; // ✅ Ensure params is awaited before usage
+  const userID = params.userID;
 
-    // Return early if params is undefined
-    if (!params) {
-      return NextResponse.json({ message: "Invalid request parameters" }, { status: 400 });
-    }
-
-    // Extract userID from URL with explicit type checking
-    const userID: string | undefined = params.userID;
-
-    if (!userID || typeof userID !== 'string') {
+  if (!userID || typeof userID !== "string") {
       return NextResponse.json({ message: "UserID is required and must be a string" }, { status: 400 });
-    }
+  }
 
-    // ✅ Retrieve the Chat model correctly before using it
-    const Chat = await getChatHistoryModel();
-    const chatHistory = await Chat.findOne({ userId: userID });
+  try {
+      const ChatHistory = await getChatHistoryModel();
+      const history = await ChatHistory.find({ userID }).sort({ createdAt: -1 });
 
-    if (!chatHistory) {
-      return NextResponse.json({ message: "No chat history found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ message: "Chat history retrieved", data: chatHistory }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error fetching chat history:", error);
-    return NextResponse.json({ message: "Server error", error: error.message }, { status: 500 });
+      return NextResponse.json({ history }, { status: 200 });
+  } catch (error) {
+      return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 
-
-
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest, { params }: { params: { userID: string } }) {
   try {
-    const { userId, message } = await req.json();
+    console.log("🔹 API received User ID:", params?.userID);
 
-    if (!userId || !message) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!params?.userID || typeof params.userID !== "string") {
+      return NextResponse.json({ error: "UserID is required and must be a string" }, { status: 400 });
     }
 
-    // ✅ Ensure Chat model is available
-    const Chat = await getChatHistoryModel();
-
-    // ✅ Fetch existing chat or create a new one
-    let chat = await Chat.findOne({ userId });
-
-    if (!chat) {
-      chat = new Chat({ userId, messages: [] });
+    const { message } = await request.json();
+    if (!message || typeof message !== "string") {
+      return NextResponse.json({ error: "Message is required and must be a string" }, { status: 400 });
     }
 
-    // ✅ Append new message
-    chat.messages.push({
-      sender: "user",
-      text: message,
-      timestamp: new Date(),
-    });
+    // Connect to MongoDB
+    await connectChatDB();
+    const ChatHistory = await getChatHistoryModel();
 
-    await chat.save();
+    // Save chat message
+    await ChatHistory.create({ userID: params.userID, messages: [{ sender: "User", text: message }] });
 
-    return NextResponse.json({ success: true, chat }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error in chat history:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ chat: { messages: [{ sender: "AI", text: "Processing..." }] } });
+  } catch (error) {
+    console.error("🚨 Internal Server Error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
