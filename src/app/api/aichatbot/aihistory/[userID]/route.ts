@@ -1,23 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import {getChatModel}  from "@/models/Chats";
-// import { connectToDatabase } from "@/lib/db";s
-// import { NextRequest, NextResponse } from "next/server";
+import {getChatHistoryModel}  from "@/models/Chats";
 
-// import getChatModel from "@/lib/models/Chat"; // Import the fixed Chat model
-// import { connectToDatabase } from "@/lib/db";
-
-export async function GET(request: NextRequest, { params }: { params: { userID: string } }) {
+export async function GET(
+  request: NextRequest, 
+  { params }: { params?: { userID?: string } }
+): Promise<NextResponse> {
   try {
     // await connectToDatabase("chat");
 
-    const { userID } = params; // Extract userID from URL
+    // Return early if params is undefined
+    if (!params) {
+      return NextResponse.json({ message: "Invalid request parameters" }, { status: 400 });
+    }
 
-    if (!userID) {
-      return NextResponse.json({ message: "UserID is required" }, { status: 400 });
+    // Extract userID from URL with explicit type checking
+    const userID: string | undefined = params.userID;
+
+    if (!userID || typeof userID !== 'string') {
+      return NextResponse.json({ message: "UserID is required and must be a string" }, { status: 400 });
     }
 
     // ✅ Retrieve the Chat model correctly before using it
-    const Chat = await getChatModel();
+    const Chat = await getChatHistoryModel();
     const chatHistory = await Chat.findOne({ userId: userID });
 
     if (!chatHistory) {
@@ -43,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ Ensure Chat model is available
-    const Chat = await getChatModel();
+    const Chat = await getChatHistoryModel();
 
     // ✅ Fetch existing chat or create a new one
     let chat = await Chat.findOne({ userId });

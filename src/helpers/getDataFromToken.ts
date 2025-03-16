@@ -1,7 +1,7 @@
-import jwt from 'jsonwebtoken'
+import { jwtVerify } from 'jose'
 import { NextRequest } from 'next/server'
 
-export function getDataFromToken(requestOrToken: NextRequest | string): any | null {
+export async function getDataFromToken(requestOrToken: NextRequest | string): Promise<any | null> {
     let token = ''
 
     // If it's a NextRequest (Middleware Case)
@@ -15,8 +15,9 @@ export function getDataFromToken(requestOrToken: NextRequest | string): any | nu
     if (!token) return null
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!)
-        return decoded // ✅ Returns the decoded user data (e.g., { userID, email })
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+        const { payload } = await jwtVerify(token, secret)
+        return payload // ✅ Returns the decoded user data (e.g., { userID, email })
     } catch (error) {
         console.error("Invalid Token:", error)
         return null

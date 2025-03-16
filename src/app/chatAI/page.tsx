@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
 export default function ChatAI() {
@@ -9,18 +9,18 @@ export default function ChatAI() {
   const [summary, setSummary] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
-  const [chatHistory, setChatHistory] = useState<{ text: string }[]>([]);
+  const [chatHistory, setChatHistory] = useState<{ sender: string; text: string }[]>([]);
   const [userID, setUserID] = useState<string | null>(null);
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   // ✅ Fetch userID from `/api/getUserId` when component mounts
   useEffect(() => {
     const fetchUserID = async () => {
       try {
-        const response = await axios.get("/api/getUserId",{
-          withCredentials: true,
-        }); // ✅ Correct API call
+        const response = await axios.get("/api/getUserId", { withCredentials: true });
         setUserID(response.data.userID);
-        if (response.data.userID) fetchChatHistory(response.data.userID); // ✅ Load previous chats
+        if (response.data.userID) fetchChatHistory(response.data.userID);
       } catch (error) {
         console.error("Failed to get userID:", error);
       }
@@ -38,6 +38,11 @@ export default function ChatAI() {
     }
   };
 
+  // ✅ Auto-scroll to latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory]);
+
   // ✅ Send message and save to chat history
   const sendMessage = async () => {
     if (!userID) {
@@ -48,13 +53,10 @@ export default function ChatAI() {
 
     setLoadingAI(true);
     try {
-      const response = await axios.post(`/api/aichatbot/aihistory`, {
-        userID,
-        message,
-      });
+      const response = await axios.post(`/api/aichatbot/aihistory`, { userID, message });
 
-      const newMessage = { text: response.data.chat?.messages.slice(-1)[0]?.text || "No response" };
-      setChatHistory((prev) => [...prev, { text: message }, newMessage]); // Update UI instantly
+      const newMessage = { sender: "AI", text: response.data.chat?.messages.slice(-1)[0]?.text || "No response" };
+      setChatHistory((prev) => [...prev, { sender: "User", text: message }, newMessage]); // Update UI instantly
       setAiResponse(newMessage.text);
       setMessage(""); // Clear input after sending
     } catch (error) {
@@ -72,22 +74,21 @@ export default function ChatAI() {
       setSummaryLoading(true);
       const res = await axios.post("/api/aichatbot/summarize", { text: aiResponse });
       setSummary(res.data.summary || "Failed to generate summary.");
-    } catch (error: any) {
+    } catch (error) {
       console.log(error);
       setSummary("Failed to generate summary.");
-      throw new Error(error.message);
     } finally {
       setSummaryLoading(false);
     }
   };
 
   return (
-    <div className="p-4 bg-black text-white">
+    <div className="p-4 bg-black text-white min-h-screen">
       <h1 className="text-xl font-bold">Chat with AI</h1>
 
       {/* ✅ Message Input */}
       <textarea
-        className="w-full p-2 border rounded bg-gray-800 text-black"
+        className="w-full p-2 border rounded bg-gray-800 text-white"
         placeholder="Type your message..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -104,12 +105,14 @@ export default function ChatAI() {
       {/* ✅ Chat History */}
       <div className="mt-4 p-2 border rounded bg-black">
         <h2 className="font-semibold">Chat History</h2>
-        <div className="mt-2">
+        <div className="mt-2 space-y-2">
           {chatHistory.map((msg, index) => (
-            <div key={index} className="p-2 border-b">
+            <div key={index} className={`p-2 border-b ${msg.sender === "User" ? "text-blue-400" : "text-green-400"}`}>
+              <strong>{msg.sender}: </strong>
               {msg.text}
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
