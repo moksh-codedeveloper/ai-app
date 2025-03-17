@@ -3,44 +3,59 @@ import User from "@/models/userModel";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
+import { serialize } from "cookie"; // Import for proper cookie formatting
+
 export async function POST(request: NextRequest) {
   try {
-    await  connect();
+    await connect();
     const reqBody = await request.json();
     const { email, password } = reqBody;
+
+    // Check if user exists
     const user = await User.findOne({ email });
-    const isVerify = await bcrypt.compare(password, user.password);
-    if (!user || !isVerify) {
+    if (!user) {
       return NextResponse.json(
-        {
-          message: "Invalid value of credentails",
-        },
-        { status: 404 }
+        { message: "Invalid credentials" },
+        { status: 401 }
       );
     }
+
+    // Verify password
+    const isVerify = await bcrypt.compare(password, user.password);
+    if (!isVerify) {
+      return NextResponse.json(
+        { message: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
+
+    // Generate JWT token
     const tokenData = {
-      id: user._id,
-      email: user.email,
-      username: user.username,
+      userID: user._id,
     };
-    const token = await jwt.sign(tokenData, process.env.JWT_SECRET!, {
+    const token = jwt.sign(tokenData, process.env.JWT_SECRET! as string, {
       expiresIn: "1d",
     });
+
+    // Set the cookie correctly
+    const cookie = serialize("token", token, {
+      httpOnly: true, // Prevent access from JavaScript
+      secure: process.env.NODE_ENV === "production", // Secure in production
+      sameSite: "strict", // Prevent CSRF attacks
+      path: "/", // Accessible on all routes
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+
+    // Send response with cookie
     const response = NextResponse.json(
-        {
-            message: "Login successfully",
-            data: token
-        }, { status: 200}
-    )
-    response.cookies.set("token", token, {
-        httpOnly: true
-    })
+      { message: "Login successful" },
+      { status: 200 }
+    );
+    response.headers.set("Set-Cookie", cookie); // Attach cookie to response
     return response;
-  } catch (error:any) {
+  } catch (error: any) {
     return NextResponse.json(
-      {
-        message: "There is something wrong" + error.message,
-      },
+      { message: "Something went wrong: " + error.message },
       { status: 500 }
     );
   }

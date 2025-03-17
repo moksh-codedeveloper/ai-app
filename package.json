@@ -12,6 +12,7 @@
     "axios": "^1.8.2",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.5.1",
+    "cookie": "^1.0.2",
     "dotenv": "^16.4.7",
     "formidable": "^3.5.2",
     "jose": "^6.0.10",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/cookie": "^0.6.0",
     "@types/formidable": "^3.4.5",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20",

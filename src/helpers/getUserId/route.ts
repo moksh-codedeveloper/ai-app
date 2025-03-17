@@ -3,7 +3,7 @@ import { useChatStore } from "@/store/chatStore";
 
 export const fetchUserID = async () => {
   try {
-    const response = await axios.get("/api/auth/me"); // Change this to your actual API
+    const response = await axios.get("/api/users/me"); // Change this to your actual API
     const userID = response.data.userID;
 
     if (userID) {

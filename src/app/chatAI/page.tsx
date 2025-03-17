@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { useChatStore } from "@/store/chatStore"; // ✅ Zustand Store
 
 export default function ChatAI() {
   const [message, setMessage] = useState("");
@@ -9,67 +10,75 @@ export default function ChatAI() {
   const [summary, setSummary] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [loadingAI, setLoadingAI] = useState(false);
-  const [chatHistory, setChatHistory] = useState<{ sender: string; text: string }[]>([]);
-  const [userID, setUserID] = useState<string | null>(null);
+
+  // ✅ Zustand state
+  const { userID, setUserID, chatHistory, setChatHistory } = useChatStore();
+
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // ✅ Fetch userID once & chat history in a single call
+  // ✅ Fetch userID & chat history only once
   useEffect(() => {
-    if(!userID) return;
-    const fetchChatHistory = async () => {
-      if (!userID || typeof userID !== "string") {
-        console.error("Invalid User ID for fetching history:", userID);
-        return;
-      }
-    
+    const fetchUserAndHistory = async () => {
       try {
-        console.log("🔹 Fetching chat history for User ID:", userID);
-    
-        const response = await axios.get(`/api/aichatbot/aihistory/${encodeURIComponent(userID)}`);
+        const { data } = await axios.get("/api/auth/me"); // ✅ Get logged-in user
+        if (!data?.userID) throw new Error("No user ID found");
+        setUserID(data.userID);
+
+        console.log("🔹 Fetching chat history for User ID:", data.userID);
+
+        const response = await axios.get(`/api/aichatbot/aihistory/${encodeURIComponent(data.userID)}`);
         setChatHistory(response.data.chat.messages || []);
-      } catch (error:any) {
-        console.error("🚨 Error fetching chat history:", error.response?.data || error.message);
+      } catch (error: any) {
+        console.error("🚨 Error fetching user or history:", error.response?.data || error.message);
       }
-    }
-    // fetchUserAndHistory();
-    if(userID) fetchChatHistory();
-  }, []);
+    };
+
+    if (!userID) fetchUserAndHistory();
+  }, [userID]);
 
   // ✅ Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
-  // ✅ Send message & update chat history
+  // ✅ Send message, get AI response, then save to backend
   const sendMessage = async () => {
-    if (!userID || typeof userID !== "string") {
+    if (!userID) {
       console.error("Invalid User ID:", userID);
       return;
     }
-  
     if (!message.trim()) return;
-  
+
     setLoadingAI(true);
+
     try {
-      console.log("🔹 Sending request with User ID:", userID);
-  
-      const response = await axios.post(`/api/aichatbot/aihistory/${encodeURIComponent(userID)}`, { message });
-      // const aiResonse = await axios.post("")
+      console.log("🔹 Sending message to AI with User ID:", userID);
+
+      // ✅ Step 1: Send message to AI
+      const aiResponseData = await axios.post("/api/aichatbot/askAI", { message });
+      const aiText = aiResponseData.data?.response || "No AI response.";
+
+      // ✅ Step 2: Update UI instantly
       const newUserMessage = { sender: "User", text: message };
-      const newAIMessage = { sender: "AI", text: response.data.chat?.messages?.slice(-1)[0]?.text || "No response" };
-  
-      setChatHistory((prev) => [...prev, newUserMessage, newAIMessage]); // Update UI instantly
-      setAiResponse(newAIMessage.text);
-      setMessage(""); // Clear input after sending
-    } catch (error:any) {
-      console.error("🚨 Error sending message:", error.response?.data || error.message);
+      const newAIMessage = { sender: "AI", text: aiText };
+
+      setChatHistory([...chatHistory, newUserMessage, newAIMessage]);
+      setAiResponse(aiText);
+      setMessage("");
+
+      // ✅ Step 3: Store the conversation in the backend
+      console.log("🔹 Storing chat in history for User ID:", userID);
+
+      await axios.post(`/api/aichatbot/aihistory/${encodeURIComponent(userID)}`, {
+        message,
+        aiResponse: aiText,
+      });
+    } catch (error: any) {
+      console.error("🚨 Error processing chat:", error.response?.data || error.message);
     } finally {
       setLoadingAI(false);
     }
   };
-  
-  
-  
 
   // ✅ Summarize AI response
   const summarizeResponse = async () => {
@@ -80,7 +89,7 @@ export default function ChatAI() {
       const res = await axios.post("/api/aichatbot/summarize", { text: aiResponse });
       setSummary(res.data.summary || "Failed to generate summary.");
     } catch (error) {
-      console.log(error);
+      console.error("🚨 Error summarizing:", error);
       setSummary("Failed to generate summary.");
     } finally {
       setSummaryLoading(false);
