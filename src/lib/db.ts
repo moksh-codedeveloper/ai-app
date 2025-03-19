@@ -1,46 +1,21 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv"
+import { MongoClient } from "mongodb";
 
-dotenv.config();
-const MONGO_URI: string = process.env.MONGODB_URI_MAIN ?? "";
+const uri = "mongodb://localhost:27017/learnix"; // Change for production
+const options = {};
 
-if (!MONGO_URI) {
-    throw new Error("❌ MONGO_URI is missing! Check your environment variables.");
-}
+let client: MongoClient;
+let clientPromise: Promise<MongoClient>;
 
-// Properly declare the global object to avoid TypeScript errors
-interface MongooseGlobal {
-    conn: mongoose.Connection | null;
-    promise: Promise<mongoose.Connection> | null;
-}
-
+// Extend the global type to include _mongoClientPromise
 declare global {
-    var mongooseGlobal: MongooseGlobal;
+  var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-// Initialize global object if not already defined
-global.mongooseGlobal = global.mongooseGlobal || { conn: null, promise: null };
-
-export async function connect() {
-    try {
-        if (global.mongooseGlobal.conn) {
-            console.log("🔄 Using existing MongoDB connection");
-            return global.mongooseGlobal.conn;
-        }
-
-        if (!global.mongooseGlobal.promise) {
-            console.log("🔌 Creating new MongoDB connection");
-            global.mongooseGlobal.promise = mongoose.connect(MONGO_URI).then((mongooseInstance) => {
-                global.mongooseGlobal.conn = mongooseInstance.connection;
-                return mongooseInstance.connection;
-            });
-        }
-
-        global.mongooseGlobal.conn = await global.mongooseGlobal.promise;
-        console.log("✅ Connected to MongoDB!");
-        return global.mongooseGlobal.conn;
-    } catch (error) {
-        console.error("❌ MongoDB connection error:", error);
-        throw error;
-    }
+// Use globalThis to ensure correct scope
+if (!globalThis._mongoClientPromise) {
+  client = new MongoClient(uri, options);
+  globalThis._mongoClientPromise = client.connect();
 }
+clientPromise = globalThis._mongoClientPromise;
+
+export default clientPromise;
